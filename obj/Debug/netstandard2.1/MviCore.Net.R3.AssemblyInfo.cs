@@ -12,8 +12,9 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("MviCore.Net.R3")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyDescriptionAttribute("A simplified single-threaded MVICore implementation built on R3.")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a26ba6319e71a04d8986c3ae83b2428fc5948dcc")]
 [assembly: System.Reflection.AssemblyProductAttribute("MviCore.Net.R3")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MviCore.Net.R3")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
