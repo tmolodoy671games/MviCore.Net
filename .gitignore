@@ -1,0 +1,49 @@
+# .NET build and package output
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+[Pp]ackages/
+*.nupkg
+*.snupkg
+*.binlog
+*.log
+
+# Test and coverage output
+[Tt]est[Rr]esults/
+BenchmarkDotNet.Artifacts/
+coverage/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# IDE and user-specific settings
+.idea/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.iml
+*.DotSettings.user
+_ReSharper*/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# OS and temporary files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*.tmp
+*~
+
+# Local environment configuration
+.env
+.env.*
+!.env.example

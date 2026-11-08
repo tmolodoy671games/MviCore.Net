@@ -5,6 +5,11 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <RootNamespace>MviCore.Net</RootNamespace>
+        <PackageId>T.Molodoy.MviCore.Net</PackageId>
+        <Version>0.0.1</Version>
+        <Authors>T.Molodoy</Authors>
+        <RepositoryUrl>https://github.com/tmolodoy671games/MviCore.Net</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Description>A simplified single-threaded MVICore implementation built on R3.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -12,7 +17,8 @@
 
     <ItemGroup>
         <PackageReference Include="R3" Version="1.3.1" />
-        <None Include="../README.md" Pack="true" PackagePath="/" />
+        <None Update="README.md" Pack="true" PackagePath="/" />
+        <PackageReference Include="T.Molodoy.SharpExtensions" Version="0.0.48" />
     </ItemGroup>
 
 </Project>

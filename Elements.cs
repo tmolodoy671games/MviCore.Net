@@ -1,4 +1,5 @@
 using R3;
+using SharpExtensions;
 
 namespace MviCore.Net;
 
@@ -16,11 +17,13 @@ public delegate Observable<TAction> Bootstrapper<TAction>();
 
 /// <summary>Optionally requests another action after reduction.</summary>
 public delegate Optional<TAction> PostProcessor<TAction, in TEffect, in TState>(
-    TAction action, TEffect effect, TState state);
+    TAction action, TEffect effect, TState state
+);
 
 /// <summary>Optionally creates a non-replayed event after reduction and postprocessing.</summary>
 public delegate Optional<TNews> NewsPublisher<in TAction, in TEffect, in TState, TNews>(
-    TAction action, TEffect effect, TState state);
+    TAction action, TEffect effect, TState state
+);
 
 /// <summary>Creates an optional event for a reducer-only feature.</summary>
 public delegate Optional<TNews> SimpleNewsPublisher<in TWish, in TState, TNews>(TWish wish, TState state);
