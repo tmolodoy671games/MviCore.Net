@@ -1,10 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <RootNamespace>MviCore.Net</RootNamespace>
+        <AssemblyName>MviCore.Net.R3</AssemblyName>
         <PackageId>T.Molodoy.MviCore.Net</PackageId>
         <Version>0.0.1</Version>
         <Authors>T.Molodoy</Authors>
@@ -19,6 +20,7 @@
         <PackageReference Include="R3" Version="1.3.1" />
         <None Update="README.md" Pack="true" PackagePath="/" />
         <PackageReference Include="T.Molodoy.SharpExtensions" Version="0.0.48" />
+        <PackageReference Include="T.Molodoy.SharpExtensions.R3" Version="0.0.1" />
     </ItemGroup>
 
 </Project>

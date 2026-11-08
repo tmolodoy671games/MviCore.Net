@@ -14,6 +14,8 @@ dotnet add package T.Molodoy.MviCore.Net --version 0.0.1
 ```csharp
 using MviCore.Net;
 using SharpExtensions;
+using SharpExtensions.R3;
+using Single = SharpExtensions.R3.Single;
 using R3;
 
 using var counter = new ReducerFeature<int, int>(
@@ -36,18 +38,18 @@ R3 `Observable<TState>` и поддерживает обычные операт�
 | Тип | Назначение |
 | --- | --- |
 | `ReducerFeature<Wish, State, News>` | Wish сразу передаётся в Reducer как Effect |
-| `ActorReducerFeature<Wish, Effect, State, News>` | Actor преобразует Wish в поток Effect |
+| `ActorReducerFeature<Wish, Effect, State, News>` | Actor преобразует Wish в один Effect |
 | `BaseFeature<Wish, Action, Effect, State, News>` | Полная цепочка с внутренними Action и PostProcessor |
 | `IStore<Wish, State>` | `Accept(wish)`, `State`, `States` |
 | `IFeature<Wish, State, News>` | Store плюс `News`, `IsDisposed`, `Dispose()` |
 
 Все три класса имеют вариант без последнего параметра `News`; в нём используется `Nothing`.
-Компоненты задаются делегатами, поэтому можно передавать лямбды и методы:
+Компоненты задаются делегатами или интерфейсами. Сигнатуры делегатов:
 
 ```text
 WishToAction:  Wish                  → Action
 Bootstrapper: ()                    → Observable<Action>
-Actor:        (State, Action)       → Observable<Effect>
+Actor:        (State, Action)       → Single<Effect>
 Reducer:      (State, Effect)       → State
 PostProcessor:(Action, Effect, State) → Optional<Action>
 NewsPublisher:(Action, Effect, State) → Optional<News>
@@ -58,12 +60,42 @@ NewsPublisher:(Action, Effect, State) → Optional<News>
 порядок generic-параметров и модель исполнения оригинала. Это не двоично совместимый порт.
 Binder, middleware, time travel и платформенные интеграции в это ядро не входят.
 
+## Реализация компонентов классами
+
+Для каждого делегата есть интерфейс с методом `Invoke`: `IWishToAction`, `IActor`,
+`IReducer`, `IBootstrapper`, `IPostProcessor`, `INewsPublisher`, `ISimpleNewsPublisher`.
+Конструкторы всех вариантов Feature принимают реализации этих интерфейсов:
+
+```csharp
+using MviCore.Net;
+using SharpExtensions.R3;
+using Single = SharpExtensions.R3.Single;
+
+public sealed class CounterActor : IActor<int, int, int>
+{
+    public Single<int> Invoke(int state, int action) => Single.Just(action);
+}
+
+public sealed class CounterReducer : IReducer<int, int>
+{
+    public int Invoke(int state, int effect) => state + effect;
+}
+
+// В вызывающем методе:
+// using var feature = new ActorReducerFeature<int, int, int>(
+//     0, new CounterActor(), new CounterReducer());
+```
+
+Перегрузки с делегатами по-прежнему принимают лямбды. Для смешивания объектов и лямбд
+можно передавать метод объекта: `actor: new CounterActor().Invoke`.
+Имя сборки — `MviCore.Net.R3.dll`; `T.Molodoy` — префикс NuGet-пакета.
+
 ## Actor и новости
 
 ```csharp
 using var feature = new ActorReducerFeature<int, int, int, string>(
     initialState: 0,
-    actor: (state, wish) => Observable.Return(wish * 2),
+    actor: (state, wish) => Single.Just(wish * 2),
     reducer: (state, effect) => state + effect,
     newsPublisher: (wish, effect, state) => state >= 10
         ? $"Достигнуто {state}"
@@ -74,14 +106,17 @@ using var news = feature.News.Subscribe(Console.WriteLine);
 feature.Accept(5);
 ```
 
-Actor получает состояние на момент поступления Action. Каждый его Effect применяется
+Actor возвращает `Single<Effect>`: одно значение или ошибку. При преобразовании
+`Observable` через `ToSingle()` значение поступает после успешного завершения; пустой
+поток или несколько значений приводят к ошибке.
+Actor получает состояние на момент поступления Action. Его Effect применяется
 к **последнему** состоянию, в том числе если другие Actor уже успели его изменить.
 Потоки разных Actor могут существовать одновременно; новый Wish не отменяет предыдущие.
 Новости получают только текущие подписчики, без сохранения и повторной выдачи.
 У `ReducerFeature` сокращённый `SimpleNewsPublisher` принимает только `(wish, state)`.
 
 `default(Optional<T>)` (или `default`) означает отсутствие Action/News. Само значение неявно
-преобразуется в `Optional<T>`; `null` для ссылочного типа также означает отсутствие.
+преобразуется в `Optional<T>`; `null` для ссылочного типа считается присутствующим значением.
 `Optional<T>` предоставляется зависимостью `T.Molodoy.SharpExtensions`. Это позволяет использовать `int`, enum и
 struct: `0` и `false` являются полноценными событиями, а не признаком отсутствия результата.
 В лямбдах для отсутствия результата предпочтителен явный `default(Optional<T>)`.
@@ -92,7 +127,7 @@ struct: `0` и `false` являются полноценными события�
 using var feature = new BaseFeature<string, int, int, int>(
     initialState: 0,
     wishToAction: int.Parse,
-    actor: (_, action) => Observable.Return(action),
+    actor: (_, action) => Single.Just(action),
     reducer: (state, effect) => state + effect,
     bootstrapper: () => Observable.Return(1),
     postProcessor: (_, _, state) => state == 2 ? 10 : default(Optional<int>));
@@ -123,8 +158,9 @@ Bootstrapper вызывается один раз в конструкторе и
 
 Ошибки уведомлений следуют модели R3: `OnErrorResume`, неуспешное завершение Actor или
 Bootstrapper и исключения Reducer/PostProcessor/NewsPublisher передаются глобальному
-`ObservableSystem.RegisterUnhandledExceptionHandler`. `OnErrorResume` не отменяет поток;
-неуспешное завершение отменяет только конкретную подписку. Feature остаётся работоспособным.
+`ObservableSystem.RegisterUnhandledExceptionHandler`. Для Bootstrapper `OnErrorResume`
+не отменяет поток; для Actor он завершает `Single` ошибкой. Неуспешное завершение
+отменяет только конкретную подписку. Feature остаётся работоспособным.
 Исключения WishToAction и фабрики Actor при прямом `Accept` выходят вызывающему коду.
 Ошибки, являющиеся частью бизнес-логики, следует преобразовывать в Effect внутри Actor.
 

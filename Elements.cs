@@ -1,13 +1,14 @@
 using R3;
 using SharpExtensions;
+using SharpExtensions.R3;
 
 namespace MviCore.Net;
 
 /// <summary>Maps a public wish to an internal action.</summary>
 public delegate TAction WishToAction<in TWish, out TAction>(TWish wish);
 
-/// <summary>Creates effects using the state at the time the action arrives.</summary>
-public delegate Observable<TEffect> Actor<in TState, in TAction, TEffect>(TState state, TAction action);
+/// <summary>Creates one effect using the state at the time the action arrives.</summary>
+public delegate Single<TEffect> Actor<in TState, in TAction, TEffect>(TState state, TAction action);
 
 /// <summary>Applies an effect to the latest state.</summary>
 public delegate TState Reducer<TState, in TEffect>(TState state, TEffect effect);

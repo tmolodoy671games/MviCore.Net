@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using R3;
+using SharpExtensions.R3;
 
 namespace MviCore.Net;
 
@@ -15,6 +16,24 @@ public class BaseFeature<TWish, TAction, TEffect, TState, TNews> : Observable<TS
     private readonly Reducer<TState, TEffect> reducer;
     private readonly PostProcessor<TAction, TEffect, TState>? postProcessor;
     private readonly NewsPublisher<TAction, TEffect, TState, TNews>? newsPublisher;
+
+    public BaseFeature(
+        TState initialState,
+        IWishToAction<TWish, TAction> wishToAction,
+        IActor<TState, TAction, TEffect> actor,
+        IReducer<TState, TEffect> reducer,
+        IBootstrapper<TAction>? bootstrapper = null,
+        IPostProcessor<TAction, TEffect, TState>? postProcessor = null,
+        INewsPublisher<TAction, TEffect, TState, TNews>? newsPublisher = null
+    ) : this(initialState,
+        (wishToAction ?? throw new ArgumentNullException(nameof(wishToAction))).Invoke,
+        (actor ?? throw new ArgumentNullException(nameof(actor))).Invoke,
+        (reducer ?? throw new ArgumentNullException(nameof(reducer))).Invoke,
+        bootstrapper == null ? null : bootstrapper.Invoke,
+        postProcessor == null ? null : postProcessor.Invoke,
+        newsPublisher == null ? null : newsPublisher.Invoke)
+    {
+    }
 
     public BaseFeature(
         TState initialState,
@@ -63,7 +82,9 @@ public class BaseFeature<TWish, TAction, TEffect, TState, TNews> : Observable<TS
     private void ProcessAction(TAction action)
     {
         if (IsDisposed) return;
-        Track(actor(State, action), effect => ProcessEffect(action, effect));
+        var source = actor(State, action)
+            ?? throw new InvalidOperationException("An actor returned null.");
+        Track(source.ToObservable(), effect => ProcessEffect(action, effect));
     }
 
     private void ProcessEffect(TAction action, TEffect effect)
@@ -167,8 +188,34 @@ public class BaseFeature<TWish, TAction, TEffect, TState, TNews> : Observable<TS
 }
 
 public class BaseFeature<TWish, TAction, TEffect, TState>(
-    TState initialState, WishToAction<TWish, TAction> wishToAction,
-    Actor<TState, TAction, TEffect> actor, Reducer<TState, TEffect> reducer,
-    Bootstrapper<TAction>? bootstrapper = null, PostProcessor<TAction, TEffect, TState>? postProcessor = null)
-    : BaseFeature<TWish, TAction, TEffect, TState, Nothing>(
-        initialState, wishToAction, actor, reducer, bootstrapper, postProcessor);
+    TState initialState,
+    WishToAction<TWish, TAction> wishToAction,
+    Actor<TState, TAction, TEffect> actor,
+    Reducer<TState, TEffect> reducer,
+    Bootstrapper<TAction>? bootstrapper = null,
+    PostProcessor<TAction, TEffect, TState>? postProcessor = null
+) : BaseFeature<TWish, TAction, TEffect, TState, Nothing>(
+    initialState,
+    wishToAction,
+    actor,
+    reducer,
+    bootstrapper,
+    postProcessor
+)
+{
+    public BaseFeature(
+        TState initialState,
+        IWishToAction<TWish, TAction> wishToAction,
+        IActor<TState, TAction, TEffect> actor,
+        IReducer<TState, TEffect> reducer,
+        IBootstrapper<TAction>? bootstrapper = null,
+        IPostProcessor<TAction, TEffect, TState>? postProcessor = null
+    ) : this(initialState,
+        (wishToAction ?? throw new ArgumentNullException(nameof(wishToAction))).Invoke,
+        (actor ?? throw new ArgumentNullException(nameof(actor))).Invoke,
+        (reducer ?? throw new ArgumentNullException(nameof(reducer))).Invoke,
+        bootstrapper == null ? null : bootstrapper.Invoke,
+        postProcessor == null ? null : postProcessor.Invoke)
+    {
+    }
+}
